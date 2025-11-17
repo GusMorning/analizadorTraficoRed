@@ -212,7 +212,8 @@ Ve a **http://localhost:5173** y ya estaría
 
 ### 1️⃣ Página Principal (Dashboard)
 
-Aquí ves un resumen de todas tus pruebas:
+<img width="1366" height="650" alt="image" src="https://github.com/user-attachments/assets/cb243b83-31a1-45e3-8838-cfea95d8d05c" />
+
 - 📊 **Gráficas**: Latencia en el tiempo, comparativas, etc.
 - 📈 **KPIs**: Números clave como pérdida de paquetes promedio
 - 🗺️ **Mapa**: Dónde hiciste cada prueba
@@ -220,13 +221,16 @@ Aquí ves un resumen de todas tus pruebas:
 
 ### 2️⃣ Nueva Prueba
 
-Aquí es donde creas y corres una prueba nueva. Tiene 4 pasos:
+<img width="1366" height="650" alt="image" src="https://github.com/user-attachments/assets/21bb4752-5b24-482f-8c28-edc58a1c7800" />
+
 
 **Paso 1: Modo de Prueba**
 - 🏠 **LAN**: Prueba en tu red local (ej: tu router)
 - 🌍 **REMOTE**: Prueba por internet (ej: un servidor en la nube)
 
 **Paso 2: Configuración Técnica**
+<img width="1366" height="650" alt="image" src="https://github.com/user-attachments/assets/9429ff73-c759-4624-8f42-228eba5be2af" />
+
 - Protocolo (UDP o TCP)
 - Host destino (IP o dominio)
 - Puerto
@@ -235,6 +239,8 @@ Aquí es donde creas y corres una prueba nueva. Tiene 4 pasos:
 - Intervalo entre paquetes (ms)
 
 **Paso 3: Herramientas**
+<img width="1366" height="650" alt="image" src="https://github.com/user-attachments/assets/04c521e5-586b-408e-b9e2-a0ebbf125ddd" />
+
 - 🔍 **Escáner de Red**: Encuentra dispositivos
 - 🔓 **Escáner de Puertos**: Ve puertos abiertos
 - ⚡ **Speedtest**: Mide tu velocidad actual
@@ -244,6 +250,7 @@ Aquí es donde creas y corres una prueba nueva. Tiene 4 pasos:
 - Dale a "Ejecutar Prueba" y ve el progreso en vivo
 
 ### 3️⃣ Historial
+<img width="1366" height="650" alt="image" src="https://github.com/user-attachments/assets/96fe7101-6a3d-41aa-9db0-f6a0730c34fa" />
 
 Lista de todas las pruebas que has hecho:
 - 📋 Tabla con filtros y búsqueda
@@ -252,6 +259,7 @@ Lista de todas las pruebas que has hecho:
 - 🗑️ (Puedes implementar borrar si quieres)
 
 ### 4️⃣ Configuración
+<img width="1366" height="650" alt="image" src="https://github.com/user-attachments/assets/c9a42cf5-60f4-4a20-9ae1-7f0f74549616" />
 
 Ajustes de la aplicación:
 - 🌐 URL del backend (útil si usas túneles o dominios)
@@ -259,8 +267,7 @@ Ajustes de la aplicación:
 - 📍 URL de CellMapper para mapas de antenas celulares
 
 ### 5️⃣ Ayuda
-
-Documentación y tips para usar la app.
+<img width="1366" height="650" alt="image" src="https://github.com/user-attachments/assets/a5752379-01b0-4286-b19f-dd6dc09168cf" />
 
 ---
 
