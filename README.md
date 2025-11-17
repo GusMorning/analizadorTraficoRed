@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ﻿# Network Lab Dashboard
 
 Suite full-stack pensada para el curso **Laboratorio de Redes de Computadores I**. Permite ejecutar pruebas LAN y remotas, enviar paquetes UDP/TCP, recibir los resultados en tiempo real, almacenar el historial en SQLite y visualizar todo en un dashboard moderno con métricas, mapa y herramientas de análisis (Speedtest, escaneo de red y de puertos).
@@ -132,3 +133,6 @@ pm run dev:agent --prefix agent).
    `
 
 ¡Listo! Con esta suite tienes pruebas LAN vs Internet (inclusive usando Tailscale), Speedtest integrado, escaneo de hosts/puertos y un mapa georreferenciado para documentar el laboratorio completo.
+=======
+# analizadorTraficoRed
+>>>>>>> fe5343c56e80c7c12f3ac60205ae92c262f33ad1
