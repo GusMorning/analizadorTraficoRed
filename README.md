@@ -8,7 +8,7 @@
 ![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
 
 **Una suite completa para analizar y medir el rendimiento de redes**  
-_Creada para estudiantes del curso Laboratorio de Redes de Computadores I_
+_Proyecto final de Lab. de Redes_
 
 [🚀 Inicio Rápido](#-instalación-rápida) • [📖 Documentación](#-cómo-funciona) • [🎯 Características](#-características-principales)
 
@@ -77,9 +77,9 @@ Esta herramienta es perfecta para:
 
 ### 🛠️ Herramientas Integradas
 - **Speedtest**: Mide tu velocidad de internet (download/upload/ping)
-- **Escáner de Red**: Descubre dispositivos conectados a tu red
-- **Escáner de Puertos**: Ve qué puertos tiene abiertos un dispositivo
-- **Geolocalización**: Marca dónde hiciste cada prueba en un mapa
+- **Fing**: Descubre dispositivos conectados a tu red
+- **Port-Droid**: Ve qué puertos tiene abiertos un dispositivo
+- **Cellmapper**: Marca dónde hiciste cada prueba en un mapa y comparara con las estaciones móviles cercanass
 
 ### 💾 Historial Completo
 - Todas las pruebas se guardan en una base de datos SQLite
@@ -132,7 +132,6 @@ Esta herramienta es perfecta para:
    - Se conecta al backend via HTTP y WebSocket
 
 2. **Backend (Express + Socket.IO)**
-   - El "cerebro" que ejecuta las pruebas
    - Guarda todo en una base de datos SQLite
    - Manda paquetes y calcula estadísticas
 
@@ -145,13 +144,11 @@ Esta herramienta es perfecta para:
 
 ## 📦 Requisitos Previos
 
-Antes de empezar, asegúrate de tener instalado:
-
 ### Obligatorios
 - **Node.js** v18 o superior → [Descargar aquí](https://nodejs.org/)
 - **npm** v9 o superior (viene con Node.js)
 
-### Opcionales (pero recomendados)
+### Adicionalesz
 - **Speedtest CLI** → Para medir velocidad de internet  
   [Descargar aquí](https://www.speedtest.net/apps/cli)
   
@@ -162,7 +159,7 @@ Antes de empezar, asegúrate de tener instalado:
   Windows: [Descargar aquí](https://nmap.org/download.html)  
   Linux: `sudo apt install nmap`
   
-- **Fing CLI** (opcional, alternativa a Nmap)  
+- **Fing** (opcional, alternativa a Nmap)  
   [Más info aquí](https://www.fing.com/products/development-toolkit)
 
 ---
@@ -180,19 +177,19 @@ cd network-lab
 
 Tienes dos opciones:
 
-**Opción A: Instalar todo de una vez** (recomendado)
+**Opción A** 
 ```bash
 npm install
 ```
 
-**Opción B: Instalar por partes**
+**Opcion B**
 ```bash
 npm install --prefix backend
 npm install --prefix frontend
 npm install --prefix agent
 ```
 
-### 3. ¡Listo! Ahora puedes arrancar
+### 3. Ejecutar
 
 ```bash
 # Terminal 1: Backend
@@ -201,13 +198,13 @@ npm run dev:server --prefix backend
 # Terminal 2: Frontend  
 npm run dev --prefix frontend
 
-# Terminal 3 (opcional): Agente remoto
+# Terminal 3 (Importante): Agente remoto
 npm run dev:agent --prefix agent
 ```
 
 ### 4. Abre tu navegador
 
-Ve a **http://localhost:5173** y ¡empieza a experimentar! 🎉
+Ve a **http://localhost:5173** y ya estaría 
 
 ---
 
