@@ -387,19 +387,12 @@ Cuando el agente recibe el paquete, lo devuelve exactamente igual. El backend ca
 
 ### ⚡ Speedtest
 
-**¿Qué hace?** Mide tu velocidad de internet real (download, upload, ping).
-
-**Cómo usarlo:**
-1. Asegúrate de tener speedtest-cli instalado
-2. En "Nueva Prueba" → Paso 3 → Click en "Ejecutar Speedtest"
-3. Espera 30-60 segundos
-4. Los resultados se guardan con la prueba
-
+**¿Qué hace?** Mide tu velocidad de internet real (download, upload)
 ---
 
 ## 📡 Capturar Tráfico con Wireshark
 
-Wireshark es **SÚPER IMPORTANTE** para entender qué está pasando.
+Wireshark ayudó a captar paquetes en el agente cusndo se enviaba mediante la app
 
 ### Filtros Útiles
 
