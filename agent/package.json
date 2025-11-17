@@ -1,0 +1,21 @@
+{
+  "name": "network-lab-agent",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "dist/agent.js",
+  "scripts": {
+    "dev:agent": "tsx watch src/agent.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/agent.js"
+  },
+  "dependencies": {
+    "network-lab-suite": "file:..",
+    "socket.io-client": "^4.7.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.25",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.4.5",
+    "tsx": "^4.15.7"
+  }
+}

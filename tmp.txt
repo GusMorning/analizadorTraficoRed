@@ -1,0 +1,326 @@
+import { FormEvent, useEffect, useState } from 'react';
+import { api } from '../services/api';
+import { useSettings } from '../context/SettingsContext';
+import { useRealtime } from '../context/RealtimeContext';
+import { CreateTestPayload, FingDevice, PacketProgress, SpeedtestSnapshot } from '../types/test';
+
+const defaultForm: CreateTestPayload = {
+  name: 'Prueba LAN casa',
+  mode: 'LAN',
+  targetHost: '127.0.0.1',
+  targetPort: 40000,
+  protocol: 'UDP',
+  packetSize: 512,
+  packetCount: 20,
+  intervalMs: 250,
+  networkType: 'Wi-Fi casa',
+  provider: 'ISP local',
+  location: 'Casa - Lima',
+  device: 'Laptop Ryzen'
+};
+
+const NewTestPage = () => {
+  const { settings } = useSettings();
+  const { socket } = useRealtime();
+  const [form, setForm] = useState<CreateTestPayload>(defaultForm);
+  const [submitting, setSubmitting] = useState(false);
+  const [activeTestId, setActiveTestId] = useState<string | null>(null);
+  const [progress, setProgress] = useState(0);
+  const [lastPacket, setLastPacket] = useState<PacketProgress | null>(null);
+  const [feedback, setFeedback] = useState<string | null>(null);
+  const [scanRange, setScanRange] = useState('192.168.0.0/24');
+  const [scanResults, setScanResults] = useState<FingDevice[]>([]);
+  const [scanLoading, setScanLoading] = useState(false);
+  const [scanError, setScanError] = useState<string | null>(null);
+  const [speedtestResult, setSpeedtestResult] = useState<SpeedtestSnapshot | null>(null);
+  const [speedtestLoading, setSpeedtestLoading] = useState(false);
+  const [speedtestError, setSpeedtestError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!socket) return;
+    const handleProgress = (payload: { testId: string; progress: number; packet: PacketProgress }) => {
+      if (payload.testId !== activeTestId) return;
+      setProgress(Math.round(payload.progress * 100));
+      setLastPacket(payload.packet);
+    };
+    const handleComplete = (payload: { testId: string }) => {
+      if (payload.testId === activeTestId) {
+        setFeedback('Prueba finalizada. Revisa el dashboard para ver métricas.');
+        setActiveTestId(null);
+      }
+    };
+    socket.on('test-progress', handleProgress);
+    socket.on('test-complete', handleComplete);
+    return () => {
+      socket.off('test-progress', handleProgress);
+      socket.off('test-complete', handleComplete);
+    };
+  }, [socket, activeTestId]);
+
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    setSubmitting(true);
+    setFeedback(null);
+    try {
+      const payload = {
+        ...form,
+        targetPort: Number(form.targetPort),
+        packetSize: Number(form.packetSize),
+        packetCount: Number(form.packetCount),
+        intervalMs: Number(form.intervalMs)
+      };
+      const response = await api.createTest(settings, payload);
+      setActiveTestId(response.id);
+      setProgress(0);
+      setFeedback('Prueba creada. Esperando resultados en tiempo real…');
+    } catch (error) {
+      setFeedback(`Error: ${(error as Error).message}`);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-semibold text-white">Nueva prueba</h1>
+        <p className="text-sm text-slate-400">Configura parámetros para comparar LAN vs Internet.</p>
+      </div>
+      <form className="grid gap-6 rounded-2xl border border-slate-800 bg-slate-900/60 p-6" onSubmit={handleSubmit}>
+        <div className="grid gap-4 md:grid-cols-2">
+          <label className="text-sm">
+            <span className="text-slate-400">Nombre de la prueba</span>
+            <input
+              className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"
+              value={form.name}
+              onChange={(event) => setForm({ ...form, name: event.target.value })}
+              required
+            />
+          </label>
+          <label className="text-sm">
+            <span className="text-slate-400">Modo</span>
+            <select
+              className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"
+              value={form.mode}
+              onChange={(event) => setForm({ ...form, mode: event.target.value as CreateTestPayload['mode'] })}
+            >
+              <option value="LAN">LAN / misma red</option>
+              <option value="REMOTE">Remota / Internet</option>
+            </select>
+          </label>
+          <label className="text-sm">
+            <span className="text-slate-400">IP o host destino</span>
+            <input
+              className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"
+              value={form.targetHost}
+              onChange={(event) => setForm({ ...form, targetHost: event.target.value })}
+              required
+            />
+          </label>
+          <label className="text-sm">
+            <span className="text-slate-400">Puerto destino (UDP 40000 / TCP 5050)</span>
+            <input
+              type="number"
+              className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"
+              value={form.targetPort}
+              onChange={(event) => setForm({ ...form, targetPort: Number(event.target.value) })}
+              required
+            />
+          </label>
+          <label className="text-sm">
+            <span className="text-slate-400">Protocolo</span>
+            <select
+              className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"
+              value={form.protocol}
+              onChange={(event) =>
+                setForm({ ...form, protocol: event.target.value as CreateTestPayload['protocol'] })
+              }
+            >
+              <option value="UDP">UDP</option>
+              <option value="TCP">TCP</option>
+            </select>
+          </label>
+          <label className="text-sm">
+            <span className="text-slate-400">Tamaño de paquete (bytes)</span>
+            <input
+              type="number"
+              className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"
+              value={form.packetSize}
+              onChange={(event) => setForm({ ...form, packetSize: Number(event.target.value) })}
+              required
+            />
+          </label>
+          <label className="text-sm">
+            <span className="text-slate-400">Número de paquetes</span>
+            <input
+              type="number"
+              className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"
+              value={form.packetCount}
+              onChange={(event) => setForm({ ...form, packetCount: Number(event.target.value) })}
+              required
+            />
+          </label>
+          <label className="text-sm">
+            <span className="text-slate-400">Intervalo entre paquetes (ms)</span>
+            <input
+              type="number"
+              className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"
+              value={form.intervalMs}
+              onChange={(event) => setForm({ ...form, intervalMs: Number(event.target.value) })}
+              required
+            />
+          </label>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <label className="text-sm">
+            <span className="text-slate-400">Tipo de red (Wi-Fi casa, datos móviles, etc.)</span>
+            <input
+              className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"
+              value={form.networkType}
+              onChange={(event) => setForm({ ...form, networkType: event.target.value })}
+              required
+            />
+          </label>
+          <label className="text-sm">
+            <span className="text-slate-400">Operador / ISP</span>
+            <input
+              className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"
+              value={form.provider}
+              onChange={(event) => setForm({ ...form, provider: event.target.value })}
+            />
+          </label>
+          <label className="text-sm">
+            <span className="text-slate-400">Ubicación</span>
+            <input
+              className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"
+              value={form.location}
+              onChange={(event) => setForm({ ...form, location: event.target.value })}
+            />
+          </label>
+          <label className="text-sm">
+            <span className="text-slate-400">Dispositivo utilizado</span>
+            <input
+              className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"
+              value={form.device}
+              onChange={(event) => setForm({ ...form, device: event.target.value })}
+            />
+          </label>
+        </div>
+        <button
+          type="submit"
+          className="rounded-lg bg-sky-500 px-6 py-2 text-sm font-semibold text-slate-950 disabled:opacity-50"
+          disabled={submitting}
+        >
+          {submitting ? 'Enviando...' : 'Iniciar prueba'}
+        </button>
+      </form>
+
+      <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
+        <p className="font-semibold">Progreso en tiempo real</p>
+        {activeTestId ? (
+          <div className="mt-4 space-y-2 text-sm text-slate-300">
+            <div className="h-3 w-full rounded-full bg-slate-800">
+              <div className="h-3 rounded-full bg-sky-500" style={{ width: `${progress}%` }} />
+            </div>          <div className="md:col-span-2 rounded-lg border border-slate-800/60 bg-slate-950/40 p-4 text-sm text-slate-300">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center">
+              <div>
+                <p className="text-xs text-slate-400">Speedtest CLI</p>
+                <p className="text-base text-white">Mide con Ookla para adjuntar al reporte</p>
+              </div>
+              <button
+                type="button"
+                onClick={handleRunSpeedtest}
+                className="rounded-lg bg-sky-500 px-4 py-2 text-xs font-semibold text-slate-950 disabled:opacity-50"
+                disabled={speedtestLoading}
+              >
+                {speedtestLoading ? 'Midiendo…' : 'Ejecutar Speedtest'}
+              </button>
+              {speedtestResult && (
+                <button
+                  type="button"
+                  className="rounded-lg border border-rose-400 px-3 py-1 text-xs text-rose-200"
+                  onClick={() => setSpeedtestResult(null)}
+                >
+                  Limpiar
+                </button>
+              )}
+            </div>
+            {speedtestError && <p className="mt-2 text-xs text-rose-400">{speedtestError}</p>}
+            {speedtestResult ? (
+              <div className="mt-3 grid gap-2 text-xs text-slate-400 md:grid-cols-4">
+                <p>Ping: <span className="text-white">{speedtestResult.ping.toFixed(2)} ms</span></p>
+                <p>Download: <span className="text-white">{speedtestResult.download.toFixed(2)} Mbps</span></p>
+                <p>Upload: <span className="text-white">{speedtestResult.upload.toFixed(2)} Mbps</span></p>
+                <p>Servidor: <span className="text-white">{speedtestResult.server}</span></p>
+                <p>ISP: <span className="text-white">{speedtestResult.isp}</span></p>
+                <p className="md:col-span-2">Tomado: {new Date(speedtestResult.timestamp).toLocaleString()}</p>
+              </div>
+            ) : (
+              <p className="mt-3 text-xs text-slate-500">
+                Ejecuta Speedtest para asociar ping/bajada/subida a esta prueba. Se guardará junto al historial.
+              </p>
+            )}
+          </div>
+            <p>{progress}% completado</p>
+            {lastPacket && (
+              <p>
+                Último paquete #{lastPacket.seq} – estado {lastPacket.status}
+                {lastPacket.rtt && ` | RTT ${lastPacket.rtt.toFixed(2)} ms`}
+              </p>
+            )}
+            <p className="text-xs text-slate-500">
+              Filtra en Wireshark: udp.port == 40000 o tcp.port == 5050 para ver el tráfico generado.
+            </p>
+          </div>          <div className="md:col-span-2 rounded-lg border border-slate-800/60 bg-slate-950/40 p-4 text-sm text-slate-300">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center">
+              <div>
+                <p className="text-xs text-slate-400">Speedtest CLI</p>
+                <p className="text-base text-white">Mide con Ookla para adjuntar al reporte</p>
+              </div>
+              <button
+                type="button"
+                onClick={handleRunSpeedtest}
+                className="rounded-lg bg-sky-500 px-4 py-2 text-xs font-semibold text-slate-950 disabled:opacity-50"
+                disabled={speedtestLoading}
+              >
+                {speedtestLoading ? 'Midiendo…' : 'Ejecutar Speedtest'}
+              </button>
+              {speedtestResult && (
+                <button
+                  type="button"
+                  className="rounded-lg border border-rose-400 px-3 py-1 text-xs text-rose-200"
+                  onClick={() => setSpeedtestResult(null)}
+                >
+                  Limpiar
+                </button>
+              )}
+            </div>
+            {speedtestError && <p className="mt-2 text-xs text-rose-400">{speedtestError}</p>}
+            {speedtestResult ? (
+              <div className="mt-3 grid gap-2 text-xs text-slate-400 md:grid-cols-4">
+                <p>Ping: <span className="text-white">{speedtestResult.ping.toFixed(2)} ms</span></p>
+                <p>Download: <span className="text-white">{speedtestResult.download.toFixed(2)} Mbps</span></p>
+                <p>Upload: <span className="text-white">{speedtestResult.upload.toFixed(2)} Mbps</span></p>
+                <p>Servidor: <span className="text-white">{speedtestResult.server}</span></p>
+                <p>ISP: <span className="text-white">{speedtestResult.isp}</span></p>
+                <p className="md:col-span-2">Tomado: {new Date(speedtestResult.timestamp).toLocaleString()}</p>
+              </div>
+            ) : (
+              <p className="mt-3 text-xs text-slate-500">
+                Ejecuta Speedtest para asociar ping/bajada/subida a esta prueba. Se guardará junto al historial.
+              </p>
+            )}
+          </div>
+        ) : (
+          <p className="mt-2 text-sm text-slate-400">Inicia una prueba para ver el progreso aquí.</p>
+        )}
+        {feedback && <p className="mt-4 text-xs text-slate-400">{feedback}</p>}
+      </div>
+    </div>
+  );
+};
+
+export default NewTestPage;
+
+
+

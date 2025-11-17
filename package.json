@@ -1,0 +1,11 @@
+﻿{
+  "name": "network-lab-suite",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix frontend run dev",
+    "dev:server": "npm --prefix backend run dev:server",
+    "dev:agent": "npm --prefix agent run dev:agent",
+    "build": "npm --prefix backend run build && npm --prefix frontend run build && npm --prefix agent run build"
+  }
+}

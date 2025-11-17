@@ -1,0 +1,47 @@
+<svg width="280" height="380" viewBox="0 0 280 380" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fondo transparente -->
+  <rect x="0" y="0" width="280" height="380" fill="none"></rect>
+
+  <!-- Mástil principal -->
+  <rect x="125" y="20" width="30" height="340" rx="10" fill="#b5bcc5"></rect>
+
+  <!-- Barra horizontal principal -->
+  <rect x="40" y="150" width="200" height="22" rx="11" fill="#a7aeb7"></rect>
+
+  <!-- “Lata” / cilindro vertical principal -->
+  <rect x="150" y="90" width="38" height="180" rx="14" fill="#9aa2ac"></rect>
+
+  <!-- Soporte central detrás del cilindro -->
+  <rect x="135" y="120" width="68" height="80" rx="12" fill="#8e96a0"></rect>
+
+  <!-- Antena tipo “cruz” a la derecha -->
+  <g transform="translate(200,160)">
+    <rect x="-10" y="-55" width="20" height="45" rx="6" fill="#c0c6ce"></rect>
+    <rect x="-10" y="10" width="20" height="45" rx="6" fill="#c0c6ce"></rect>
+    <rect x="-55" y="-10" width="45" height="20" rx="6" fill="#c0c6ce"></rect>
+    <rect x="10" y="-10" width="45" height="20" rx="6" fill="#c0c6ce"></rect>
+  </g>
+
+  <!-- Tubos y cables laterales simplificados -->
+  <!-- Tubo lateral largo -->
+  <rect x="90" y="40" width="10" height="300" rx="5" fill="#c3cad2"></rect>
+
+  <!-- Pequeños soportes/tubos -->
+  <rect x="90" y="40" width="70" height="10" rx="5" fill="#c3cad2"></rect>
+  <rect x="90" y="110" width="40" height="8" rx="4" fill="#c3cad2"></rect>
+  <rect x="90" y="210" width="50" height="8" rx="4" fill="#c3cad2"></rect>
+
+  <!-- Cable curvo (trayectoria simplificada) -->
+  <path d="M 100 80
+       C 60 120, 60 190, 95 220
+       C 130 250, 120 290, 90 320" fill="none" stroke="#868e98" stroke-width="6" stroke-linecap="round"></path>
+
+  <!-- Pequeños círculos de fijación -->
+  <circle cx="125" cy="70" r="5" fill="#d3d8de"></circle>
+  <circle cx="125" cy="140" r="5" fill="#d3d8de"></circle>
+  <circle cx="125" cy="210" r="5" fill="#d3d8de"></circle>
+  <circle cx="125" cy="280" r="5" fill="#d3d8de"></circle>
+
+  <!-- Sombras suaves -->
+  <ellipse cx="140" cy="360" rx="70" ry="10" fill="#d5dae1" opacity="0.6"></ellipse>
+</svg>
