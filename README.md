@@ -157,8 +157,8 @@ Esta herramienta es perfecta para comparar redes, entender cómo funcionan y doc
 ### 1. Clona o descarga el proyecto
 
 ```bash
-git clone https://github.com/tu-usuario/network-lab.git
-cd network-lab
+git clone https://github.com/GusMorning/analizadorTraficoRed.git
+cd analizadorTraficoRed
 ```
 
 ### 2. Instala las dependencias
