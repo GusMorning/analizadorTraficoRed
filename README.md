@@ -1,5 +1,4 @@
 # 🌐 Network Lab - Laboratorio de Redes de Computadoras
-
 <div align="center">
 
 ![Network Lab](https://img.shields.io/badge/Network-Lab-blue?style=for-the-badge)
@@ -21,19 +20,15 @@ _Proyecto final de Lab. de Redes_
 - [¿Qué es esto?](#-qué-es-esto)
 - [¿Para qué sirve?](#-para-qué-sirve)
 - [Características Principales](#-características-principales)
-- [Arquitectura del Sistema](#-arquitectura-del-sistema)
 - [Requisitos Previos](#-requisitos-previos)
 - [Instalación Rápida](#-instalación-rápida)
 - [Cómo Usar la Aplicación](#-cómo-usar-la-aplicación)
 - [Cómo Funciona](#-cómo-funciona)
 - [Guía Paso a Paso](#-guía-paso-a-paso)
-- [Herramientas Integradas](#-herramientas-integradas)
 - [Capturar Tráfico con Wireshark](#-capturar-tráfico-con-wireshark)
-- [Para tu Informe](#-para-tu-informe)
 - [Estructura del Proyecto](#-estructura-del-proyecto)
-- [Scripts Disponibles](#-scripts-disponibles)
 - [Troubleshooting](#-problemas-comunes)
-- [Contribuir](#-contribuir)
+
 
 ---
 
@@ -51,14 +46,7 @@ Lo mejor es que puedes comparar diferentes tipos de conexión:
 
 ## 🎯 ¿Para qué sirve?
 
-Esta herramienta es perfecta para:
-
-✅ **Hacer tu laboratorio de redes** - Cumple con todos los requisitos del curso  
-✅ **Comparar redes** - Ve cuál funciona mejor en diferentes escenarios  
-✅ **Entender cómo funcionan las redes** - Aprende viendo paquetes reales  
-✅ **Documentar resultados** - Exporta datos para tu informe en PDF  
-✅ **Analizar con Wireshark** - Captura tráfico real para análisis profundo
-
+Esta herramienta es perfecta para comparar redes, entender cómo funcionan y documentar los resultados con ayuda de Wireshark
 ---
 
 ## ⭐ Características Principales
@@ -94,29 +82,29 @@ Esta herramienta es perfecta para:
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    🖥️ FRONTEND (React)                      │
-│  ┌────────────┐  ┌────────────┐  ┌────────────┐           │
-│  │ Dashboard  │  │ New Test   │  │  History   │           │
-│  └────────────┘  └────────────┘  └────────────┘           │
-│         │                │                │                 │
-│         └────────────────┴────────────────┘                 │
-│                        │                                     │
-│                   HTTP REST API                              │
-│                   WebSocket (live)                           │
+│  ┌────────────┐  ┌────────────┐  ┌────────────┐             │
+│  │ Dashboard  │  │ New Test   │  │  History   │             │
+│  └────────────┘  └────────────┘  └────────────┘             │
+│         │                │                │                 │ 
+│         └────────────────┴────────────────┘                 │ 
+│                        │                                    │
+│                   HTTP REST API                             │
+│                   WebSocket (live)                          │
 └───────────────────────┬─────────────────────────────────────┘
                         │
-┌───────────────────────▼─────────────────────────────────────┐
-│                  🔧 BACKEND (Node.js)                        │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  │
-│  │   API    │  │ WebSocket│  │ Database │  │ Services │  │
-│  │ Express  │  │Socket.IO │  │  SQLite  │  │ Testing  │  │
-│  └──────────┘  └──────────┘  └──────────┘  └──────────┘  │
+┌───────────────────────▼──────────────────────────────────────┐
+│                  🔧 BACKEND (Node.js)                       │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐      │
+│  │   API    │  │ WebSocket│  │ Database │  │ Services │      │
+│  │ Express  │  │Socket.IO │  │  SQLite  │  │ Testing  │      │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘      │
 │                        │                                     │
 │              Manda paquetes UDP/TCP                          │
-└───────────────────────┬─────────────────────────────────────┘
+└───────────────────────┬──────────────────────────────────────┘
                         │
                         ▼
         ┌───────────────────────────────┐
-        │  🎯 AGENTE REMOTO (opcional)  │
+        │  🎯 AGENTE REMOTO             │
         │                               │
         │  • Escucha en puertos UDP/TCP │
         │  • Hace "eco" de paquetes     │
@@ -135,7 +123,7 @@ Esta herramienta es perfecta para:
    - Guarda todo en una base de datos SQLite
    - Manda paquetes y calcula estadísticas
 
-3. **Agente Remoto (Opcional)**
+3. **Agente Remoto**
    - Un mini-servidor que instalas en otra computadora
    - Recibe paquetes y los devuelve (hace "eco")
    - Necesario solo para pruebas remotas
@@ -212,7 +200,8 @@ Ve a **http://localhost:5173** y ya estaría
 
 ### 1️⃣ Página Principal (Dashboard)
 
-<img width="1366" height="650" alt="image" src="https://github.com/user-attachments/assets/cb243b83-31a1-45e3-8838-cfea95d8d05c" />
+<img width="1920" height="962" alt="image" src="https://github.com/user-attachments/assets/b5fe9251-0643-4724-95ce-f0184333e3a5" />
+
 
 - 📊 **Gráficas**: Latencia en el tiempo, comparativas, etc.
 - 📈 **KPIs**: Números clave como pérdida de paquetes promedio
@@ -221,7 +210,7 @@ Ve a **http://localhost:5173** y ya estaría
 
 ### 2️⃣ Nueva Prueba
 
-<img width="1366" height="650" alt="image" src="https://github.com/user-attachments/assets/21bb4752-5b24-482f-8c28-edc58a1c7800" />
+<img width="1920" height="962" alt="image" src="https://github.com/user-attachments/assets/f38119e1-648e-477f-bcd6-79ddd3863431" />
 
 
 **Paso 1: Modo de Prueba**
@@ -229,7 +218,7 @@ Ve a **http://localhost:5173** y ya estaría
 - 🌍 **REMOTE**: Prueba por internet (ej: un servidor en la nube)
 
 **Paso 2: Configuración Técnica**
-<img width="1366" height="650" alt="image" src="https://github.com/user-attachments/assets/9429ff73-c759-4624-8f42-228eba5be2af" />
+<img width="1920" height="962" alt="image" src="https://github.com/user-attachments/assets/a992faac-6847-486a-a3ab-53bdb0d15c3a" />
 
 - Protocolo (UDP o TCP)
 - Host destino (IP o dominio)
@@ -239,27 +228,37 @@ Ve a **http://localhost:5173** y ya estaría
 - Intervalo entre paquetes (ms)
 
 **Paso 3: Herramientas**
-<img width="1366" height="650" alt="image" src="https://github.com/user-attachments/assets/04c521e5-586b-408e-b9e2-a0ebbf125ddd" />
+
+<img width="1920" height="962" alt="image" src="https://github.com/user-attachments/assets/e7b9a3c6-6d9e-445a-95e8-0c3b2eed5857" />
+
 
 - 🔍 **Escáner de Red**: Encuentra dispositivos
+<img width="1685" height="275" alt="image" src="https://github.com/user-attachments/assets/4ecb015b-432b-4bf5-b901-aaa2f7671428" />
+
 - 🔓 **Escáner de Puertos**: Ve puertos abiertos
+<img width="1684" height="214" alt="image" src="https://github.com/user-attachments/assets/f0814000-e2d1-444e-97f5-14d3877acf21" />
+
 - ⚡ **Speedtest**: Mide tu velocidad actual
+<img width="1685" height="207" alt="image" src="https://github.com/user-attachments/assets/0ff8ac7f-b889-4f85-8df5-529f0aafaadb" />
 
 **Paso 4: Contexto y Ejecutar**
 - Llena datos como: tipo de red, proveedor, ubicación, dispositivo
 - Dale a "Ejecutar Prueba" y ve el progreso en vivo
+<img width="1719" height="173" alt="image" src="https://github.com/user-attachments/assets/87bcfb7c-8529-4541-98e9-9dae22a2aa0f" />
 
 ### 3️⃣ Historial
 <img width="1366" height="650" alt="image" src="https://github.com/user-attachments/assets/96fe7101-6a3d-41aa-9db0-f6a0730c34fa" />
 
 Lista de todas las pruebas que has hecho:
+<img width="1724" height="406" alt="image" src="https://github.com/user-attachments/assets/81f94156-5516-4f0f-a52f-083f409bfa0b" />
+
 - 📋 Tabla con filtros y búsqueda
 - 👁️ Click en cualquier prueba para ver detalles
 - 💾 Exporta a CSV o JSON
 - 🗑️ (Puedes implementar borrar si quieres)
 
 ### 4️⃣ Configuración
-<img width="1366" height="650" alt="image" src="https://github.com/user-attachments/assets/c9a42cf5-60f4-4a20-9ae1-7f0f74549616" />
+<img width="1920" height="962" alt="image" src="https://github.com/user-attachments/assets/02565713-e29d-4e19-be7d-f754c362d783" />
 
 Ajustes de la aplicación:
 - 🌐 URL del backend (útil si usas túneles o dominios)
@@ -267,7 +266,7 @@ Ajustes de la aplicación:
 - 📍 URL de CellMapper para mapas de antenas celulares
 
 ### 5️⃣ Ayuda
-<img width="1366" height="650" alt="image" src="https://github.com/user-attachments/assets/a5752379-01b0-4286-b19f-dd6dc09168cf" />
+<img width="1920" height="962" alt="image" src="https://github.com/user-attachments/assets/e9ba4d13-1118-415f-a6b5-209473aa234b" />
 
 ---
 
@@ -351,6 +350,9 @@ Cuando el agente recibe el paquete, lo devuelve exactamente igual. El backend ca
    npm run dev:server --prefix backend
    npm run dev --prefix frontend
    ```
+<img width="998" height="162" alt="image" src="https://github.com/user-attachments/assets/c717872b-53b2-4885-addb-6fd5508eada0" />
+<img width="646" height="171" alt="image" src="https://github.com/user-attachments/assets/0dadf485-f792-4e53-bb6e-79f40707bbd8" />
+
 
 2. **Ve a "Nueva Prueba"**
 
@@ -358,32 +360,38 @@ Cuando el agente recibe el paquete, lo devuelve exactamente igual. El backend ca
    - Modo: **LAN** 🏠
    - Host: Tu router (ej: `192.168.1.1`)
    - Puerto: `40000`
+   <img width="1734" height="541" alt="image" src="https://github.com/user-attachments/assets/9075d53c-8401-4146-8b70-1a12361a3af8" />
+
    - Protocolo: **UDP**
    - Paquetes: `100`
    - Tamaño: `64` bytes
    - Intervalo: `100` ms
+   <img width="1735" height="372" alt="image" src="https://github.com/user-attachments/assets/446460ad-5f69-4231-b6e7-131f5b047c7b" />
 
 4. **En Herramientas:**
+   <img width="1716" height="448" alt="image" src="https://github.com/user-attachments/assets/1184eda8-bb34-40c1-a918-f6eae079bf61" />
    - Ejecuta el **Escáner de Red** para ver tu router
    - Ejecuta **Speedtest** para referencia
-
-5. **Llena el contexto:**
+   
+6. **Llena el contexto:**
+   <img width="1728" height="512" alt="image" src="https://github.com/user-attachments/assets/f4c33a16-a0e7-4956-bc97-e5463fd9b5eb" />
    - Tipo de Red: WiFi
    - Proveedor: Tu ISP
    - Frecuencia: 2.4GHz o 5GHz
    - Ubicación: Tu casa
    - Dispositivo: Tu laptop/PC
 
-6. **Dale a "Ejecutar Prueba"** y ve el progreso en vivo!
+7. **Dale a "Ejecutar Prueba"** 
 
-7. **Analiza los resultados:**
+8. **Analiza los resultados:**
+   <img width="1920" height="962" alt="image" src="https://github.com/user-attachments/assets/25a3e14c-a4e3-4783-a22c-f794eae6a237" />
+
    - Latencia baja (<10ms) = ¡Excelente!
    - Pérdida de paquetes 0% = Perfecto
    - Si ves jitter alto, puede haber interferencia
-
 ---
 
-## 🛠️ Herramientas Integradas
+## 🛠️ Herramientas IntegradasTUI
 
 ### ⚡ Speedtest
 
@@ -405,21 +413,6 @@ udp.port == 40000
 ```
 tcp.port == 5050
 ```
-
----
-
-## 📄 Para tu Informe
-
-### Screenshots Recomendados
-
-📸 **Del Dashboard:**
-- Vista general con todas las gráficas
-- Comparativa LAN vs Remote
-
-📸 **De Wireshark:**
-- Captura de paquetes
-- Estadísticas
-
 ---
 
 ## 📁 Estructura del Proyecto
@@ -459,16 +452,9 @@ export API_PORT=4001
 
 ---
 
-## 🤝 Contribuir
-
-¿Mejoras? ¡Pull requests bienvenidos!
-
----
 
 <div align="center">
 
-### ⭐ Si te sirvió, regala una estrella en GitHub ⭐
-
-**¡Happy hacking! 🚀**
+### ⭐ Hecho como Proyecto Final de Lab. Redes del Prof. Herbert ⭐
 
 </div>
