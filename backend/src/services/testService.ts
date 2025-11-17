@@ -1,15 +1,39 @@
-﻿import { Server } from 'socket.io';
+﻿/**
+ * Servicio de Gestión de Pruebas de Red
+ * 
+ * Servicio principal que coordina:
+ * - Creación y almacenamiento de pruebas
+ * - Ejecución de pruebas con networkTester
+ * - Emisión de eventos en tiempo real vía WebSocket
+ * - Consulta de pruebas almacenadas
+ * 
+ * Las pruebas se almacenan en SQLite y los eventos de progreso
+ * se emiten en tiempo real a los clientes conectados vía Socket.IO.
+ */
+
+import { Server } from 'socket.io';
 import { v4 as uuidv4 } from 'uuid';
 import db from '../db/index.js';
 import { CreateTestRequest, PacketProgress, TestRecord, TestResult } from '../types/test.js';
 import { runNetworkTest } from './networkTester.js';
 
+/** Instancia de Socket.IO para eventos en tiempo real */
 let io: Server | null = null;
 
+/**
+ * Registra la instancia de Socket.IO para emitir eventos
+ * Debe llamarse al iniciar el servidor
+ * 
+ * @param instance - Instancia de Socket.IO Server
+ */
 export const registerSocket = (instance: Server) => {
   io = instance;
 };
 
+/**
+ * Prepared statement para insertar una nueva prueba
+ * Inserta todos los campos de configuración y metadata inicial
+ */
 const insertTestStmt = db.prepare(`
   INSERT INTO tests (
     id, name, mode, targetHost, targetPort, protocol,
@@ -32,6 +56,10 @@ const insertTestStmt = db.prepare(`
     @createdAt)
 `);
 
+/**
+ * Prepared statement para actualizar el resumen de una prueba
+ * Actualiza el estado y todas las métricas calculadas
+ */
 const updateTestSummaryStmt = db.prepare(`
   UPDATE tests SET
     status = @status,
@@ -45,18 +73,59 @@ const updateTestSummaryStmt = db.prepare(`
   WHERE id = @id
 `);
 
+/** Obtiene todas las pruebas ordenadas por fecha descendente */
 const getTestsStmt = db.prepare('SELECT * FROM tests ORDER BY datetime(createdAt) DESC');
+
+/** Obtiene una prueba específica por ID */
 const getTestByIdStmt = db.prepare('SELECT * FROM tests WHERE id = ?');
+
+/** Inserta el resultado de un paquete individual */
 const insertPacketStmt = db.prepare(`
   INSERT INTO packet_results (testId, seq, sentAt, receivedAt, rtt, status)
   VALUES (@testId, @seq, @sentAt, @receivedAt, @rtt, @status)
 `);
+
+/** Obtiene todos los paquetes de una prueba específica */
 const getPacketsStmt = db.prepare('SELECT * FROM packet_results WHERE testId = ? ORDER BY seq ASC');
 
+/**
+ * Crea y ejecuta una nueva prueba de red
+ * 
+ * La función:
+ * 1. Crea un registro de prueba en la BD con estado 'running'
+ * 2. Ejecuta la prueba de forma asíncrona
+ * 3. Emite eventos de progreso en tiempo real vía WebSocket
+ * 4. Actualiza la BD con los resultados finales
+ * 
+ * Eventos WebSocket emitidos:
+ * - test-started: Cuando comienza la prueba
+ * - test-progress: Por cada paquete procesado
+ * - test-log: Mensajes de log durante la prueba
+ * - test-complete: Cuando finaliza exitosamente
+ * - test-error: Si ocurre un error
+ * 
+ * @param payload - Configuración de la prueba
+ * @returns Objeto con id y createdAt de la prueba
+ * 
+ * @example
+ * const { id } = await createTest({
+ *   name: 'Prueba WiFi',
+ *   mode: 'LAN',
+ *   targetHost: '192.168.1.1',
+ *   targetPort: 40000,
+ *   protocol: 'UDP',
+ *   packetSize: 64,
+ *   packetCount: 100,
+ *   intervalMs: 100,
+ *   // ... más configuración
+ * });
+ */
 export const createTest = async (payload: CreateTestRequest) => {
   const id = uuidv4();
   const createdAt = new Date().toISOString();
   const { speedtest, ...testConfig } = payload;
+  
+  // Valores por defecto para campos opcionales
   const defaults = {
     networkType: testConfig.networkType ?? 'Desconocida',
     provider: testConfig.provider ?? 'N/A',
@@ -72,6 +141,8 @@ export const createTest = async (payload: CreateTestRequest) => {
     signalSource: testConfig.signalSource ?? 'N/A',
     interpretationNotes: testConfig.interpretationNotes ?? null
   };
+  
+  // Insertar prueba en la base de datos con estado 'running'
   insertTestStmt.run({
     id,
     ...testConfig,
@@ -86,10 +157,14 @@ export const createTest = async (payload: CreateTestRequest) => {
     createdAt
   });
 
+  // Emitir evento de inicio de prueba
   io?.emit('test-started', { id, name: payload.name, createdAt });
 
+  // Ejecutar la prueba de forma asíncrona
   runNetworkTest(id, payload, {
+    // Callback para cada paquete procesado
     onPacket: (packet, progress) => {
+      // Solo guardar paquetes recibidos o perdidos (no 'sent')
       if (packet.status !== 'sent') {
         insertPacketStmt.run({
           testId: id,
@@ -100,13 +175,16 @@ export const createTest = async (payload: CreateTestRequest) => {
           status: packet.status
         });
       }
+      // Emitir progreso en tiempo real
       io?.emit('test-progress', { testId: id, packet, progress });
     },
+    // Callback para mensajes de log
     onLog: (message) => {
       io?.emit('test-log', { testId: id, message });
     }
   })
     .then(({ summary }) => {
+      // Prueba completada exitosamente
       updateTestSummaryStmt.run({
         id,
         status: 'completed',
@@ -115,6 +193,7 @@ export const createTest = async (payload: CreateTestRequest) => {
       io?.emit('test-complete', { testId: id, summary });
     })
     .catch((error) => {
+      // Error en la prueba - marcar como fallida
       updateTestSummaryStmt.run({
         id,
         status: 'failed',
@@ -132,6 +211,18 @@ export const createTest = async (payload: CreateTestRequest) => {
   return { id, createdAt };
 };
 
+/**
+ * Lista todas las pruebas almacenadas
+ * 
+ * Retorna un resumen de todas las pruebas sin los detalles de paquetes individuales.
+ * Las pruebas están ordenadas por fecha de creación descendente (más recientes primero).
+ * 
+ * @returns Array de TestRecord con metadata y resumen de resultados
+ * 
+ * @example
+ * const tests = listTests();
+ * tests.forEach(t => console.log(`${t.name}: ${t.packetLoss}% loss`));
+ */
 export const listTests = (): TestRecord[] => {
   const rows = getTestsStmt.all();
   return rows.map((row) => ({
@@ -181,6 +272,22 @@ export const listTests = (): TestRecord[] => {
   }));
 };
 
+/**
+ * Obtiene los detalles completos de una prueba específica
+ * 
+ * Incluye toda la metadata, resumen de resultados y el detalle de cada paquete individual.
+ * Útil para análisis detallado y visualizaciones de la prueba.
+ * 
+ * @param id - UUID de la prueba
+ * @returns TestResult completo con array de paquetes, o null si no existe
+ * 
+ * @example
+ * const test = getTestDetail('123e4567-e89b-12d3-a456-426614174000');
+ * if (test) {
+ *   console.log(`Packets: ${test.packets.length}`);
+ *   test.packets.forEach(p => console.log(`Seq ${p.seq}: ${p.rtt}ms`));
+ * }
+ */
 export const getTestDetail = (id: string): TestResult | null => {
   const row = getTestByIdStmt.get(id);
   if (!row) return null;

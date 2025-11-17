@@ -1,7 +1,21 @@
-﻿import { Request, Response } from 'express';
+﻿/**
+ * Controlador de Pruebas de Red
+ * 
+ * Maneja las peticiones HTTP relacionadas con pruebas de red:
+ * - Crear nueva prueba
+ * - Listar pruebas existentes
+ * - Obtener detalles de una prueba específica
+ * 
+ * Incluye validación de datos con Zod
+ */
+
+import { Request, Response } from 'express';
 import { z } from 'zod';
 import { createTest, getTestDetail, listTests } from '../services/testService.js';
 
+/**
+ * Schema de validación para datos de speedtest (opcional)
+ */
 const speedtestSchema = z
   .object({
     ping: z.number(),
@@ -13,6 +27,10 @@ const speedtestSchema = z
   })
   .optional();
 
+/**
+ * Schema de validación para crear una nueva prueba
+ * Valida todos los parámetros requeridos y opcionales
+ */
 const createTestSchema = z.object({
   name: z.string().min(3),
   mode: z.enum(['LAN', 'REMOTE']),
@@ -38,6 +56,17 @@ const createTestSchema = z.object({
   speedtest: speedtestSchema
 });
 
+/**
+ * POST /api/tests
+ * Crea y ejecuta una nueva prueba de red
+ * 
+ * La prueba se ejecuta de forma asíncrona y los resultados
+ * se envían en tiempo real vía WebSocket
+ * 
+ * @returns 201 con { id, createdAt } si es exitoso
+ * @returns 400 si la validación falla
+ * @returns 500 si hay un error en la ejecución
+ */
 export const handleCreateTest = async (req: Request, res: Response) => {
   const parseResult = createTestSchema.safeParse(req.body);
   if (!parseResult.success) {
@@ -51,11 +80,26 @@ export const handleCreateTest = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * GET /api/tests
+ * Lista todas las pruebas almacenadas
+ * 
+ * @returns Array de TestRecord ordenados por fecha descendente
+ */
 export const handleListTests = (_req: Request, res: Response) => {
   const tests = listTests();
   return res.json(tests);
 };
 
+/**
+ * GET /api/tests/:id
+ * Obtiene los detalles completos de una prueba específica
+ * Incluye información de cada paquete individual
+ * 
+ * @param id - UUID de la prueba
+ * @returns TestResult con todos los detalles
+ * @returns 404 si la prueba no existe
+ */
 export const handleGetTestDetail = (req: Request, res: Response) => {
   const { id } = req.params;
   const test = getTestDetail(id);

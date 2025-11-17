@@ -1,21 +1,62 @@
-﻿import dgram from 'node:dgram';
+﻿/**
+ * Motor de Pruebas de Red (Network Tester)
+ * 
+ * Módulo principal que ejecuta pruebas de red enviando paquetes UDP o TCP
+ * a un agente remoto y midiendo la latencia, jitter, throughput y pérdida de paquetes.
+ * 
+ * Arquitectura:
+ * - Cliente: Envía paquetes con headers JSON que contienen metadata
+ * - Agente remoto: Hace echo de los paquetes recibidos
+ * - Cliente: Mide RTT al recibir el echo
+ * 
+ * Protocolos soportados:
+ * - UDP: Para pruebas de latencia con mínimo overhead
+ * - TCP: Para pruebas de latencia sobre conexión confiable
+ * 
+ * Filtros Wireshark sugeridos:
+ * - UDP: udp.port == 40000
+ * - TCP: tcp.port == 5050
+ */
+
+import dgram from 'node:dgram';
 import net from 'node:net';
 import { once } from 'events';
 import { CreateTestRequest, PacketProgress, TestSummary } from '../types/test.js';
 import { TCP_PROBE_PORT, UDP_PROBE_PORT } from '../config.js';
 
+/**
+ * Callbacks para reportar progreso durante la prueba
+ */
 export interface TestRunCallbacks {
+  /** Llamado por cada evento de paquete (sent/received/lost) */
   onPacket: (packet: PacketProgress, progress: number) => void;
+  /** Llamado para mensajes de log opcionales */
   onLog?: (message: string) => void;
 }
 
+/**
+ * Información de un paquete pendiente de respuesta
+ */
 interface PendingPacket {
+  /** Timestamp de envío en ms */
   sentAt: number;
+  /** Timer para marcar el paquete como perdido si no hay respuesta */
   timeout: NodeJS.Timeout;
 }
 
+/**
+ * Función auxiliar para esperar un tiempo determinado
+ * @param ms - Milisegundos a esperar
+ */
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+/**
+ * Decodifica el header JSON de un paquete recibido
+ * El header está en la primera línea del buffer, separado por '\n'
+ * 
+ * @param buffer - Buffer del paquete recibido
+ * @returns Header parseado con seq, testId y sentAt, o null si falla
+ */
 const decodeHeader = (buffer: Buffer) => {
   const newlineIndex = buffer.indexOf('\n');
   const headerChunk = newlineIndex >= 0 ? buffer.subarray(0, newlineIndex).toString('utf8') : buffer.toString('utf8');
@@ -26,6 +67,17 @@ const decodeHeader = (buffer: Buffer) => {
   }
 };
 
+/**
+ * Crea un buffer de paquete con header JSON y padding
+ * 
+ * Formato del paquete:
+ * - Primera línea: JSON con metadata (seq, testId, sentAt)
+ * - Resto: Padding para alcanzar el tamaño especificado
+ * 
+ * @param payload - Metadata del paquete (seq, testId, sentAt)
+ * @param packetSize - Tamaño total deseado del paquete en bytes
+ * @returns Buffer del paquete listo para enviar
+ */
 const createPacketBuffer = (payload: { seq: number; testId: string; sentAt: string }, packetSize: number) => {
   const header = `${JSON.stringify(payload)}\n`;
   const headerBuffer = Buffer.from(header, 'utf8');
@@ -35,7 +87,34 @@ const createPacketBuffer = (payload: { seq: number; testId: string; sentAt: stri
   return packetBuffer;
 };
 
-// Core runner responsible for sending/receiving the probe packets.
+/**
+ * Ejecuta una prueba de red completa
+ * 
+ * Esta es la función principal que coordina toda la prueba:
+ * 1. Configura el protocolo (UDP o TCP)
+ * 2. Envía paquetes según la configuración
+ * 3. Recibe respuestas del agente remoto
+ * 4. Calcula métricas (RTT, jitter, throughput, packet loss)
+ * 5. Emite eventos de progreso via callbacks
+ * 
+ * @param testId - UUID único de la prueba
+ * @param config - Configuración completa de la prueba
+ * @param callbacks - Funciones para reportar progreso
+ * @returns Promise con resumen y array de paquetes
+ * 
+ * @example
+ * await runNetworkTest('test-123', {
+ *   protocol: 'UDP',
+ *   targetHost: '192.168.1.100',
+ *   targetPort: 40000,
+ *   packetCount: 100,
+ *   packetSize: 64,
+ *   intervalMs: 100
+ * }, {
+ *   onPacket: (packet, progress) => console.log(`${progress}%`),
+ *   onLog: (msg) => console.log(msg)
+ * });
+ */
 export const runNetworkTest = async (
   testId: string,
   config: CreateTestRequest,
@@ -48,12 +127,22 @@ export const runNetworkTest = async (
   const startTime = Date.now();
   let completedCount = 0;
 
+  /**
+   * Emite un evento de paquete con progreso actualizado
+   */
   const emitPacket = (packet: PacketProgress) => {
     packets[packet.seq - 1] = packet;
     const progress = completedCount / config.packetCount;
     callbacks.onPacket(packet, progress);
   };
 
+  /**
+   * Completa el procesamiento de un paquete (received o lost)
+   * 
+   * @param seq - Número de secuencia del paquete
+   * @param status - Estado final: 'received' o 'lost'
+   * @param rtt - Round-trip time en ms (solo para paquetes recibidos)
+   */
   const completePacket = (seq: number, status: 'received' | 'lost', rtt?: number) => {
     const pendingPacket = pending.get(seq);
     if (!pendingPacket) return;
@@ -76,6 +165,12 @@ export const runNetworkTest = async (
     emitPacket(packet);
   };
 
+  /**
+   * Loop de envío de paquetes
+   * Envía paquetes secuencialmente respetando el intervalo configurado
+   * 
+   * @param sendPacket - Función que envía un paquete individual
+   */
   const sendLoop = async (sendPacket: (seq: number) => Promise<void>) => {
     for (let seq = 1; seq <= config.packetCount; seq += 1) {
       if (seq > 1) {
@@ -85,6 +180,10 @@ export const runNetworkTest = async (
     }
   };
 
+  /**
+   * Promesa que se resuelve cuando todos los paquetes están completos
+   * Coordina la ejecución de la prueba según el protocolo
+   */
   const finalizePromise = new Promise<void>((resolve, reject) => {
     const checkCompletion = () => {
       if (completedCount >= config.packetCount) {
@@ -118,7 +217,17 @@ export const runNetworkTest = async (
   const receivedPackets = packets.filter((p) => p?.status === 'received');
   const lostPackets = packets.filter((p) => p?.status === 'lost');
 
-  // Summary metrics are calculated here so that the dashboard only needs to read from SQLite.
+  /**
+   * Cálculo de métricas estadísticas
+   * 
+   * - avgLatency: Promedio de RTTs
+   * - maxLatency: RTT máximo
+   * - minLatency: RTT mínimo
+   * - jitter: Variación promedio entre RTTs consecutivos
+   * - throughput: Mbps basado en paquetes recibidos
+   * - packetLoss: Porcentaje de paquetes perdidos
+   * - totalDuration: Duración total de la prueba en segundos
+   */
   const avgLatency = receivedRtts.length
     ? receivedRtts.reduce((acc, curr) => acc + curr, 0) / receivedRtts.length
     : 0;
@@ -145,6 +254,24 @@ export const runNetworkTest = async (
   return { summary, packets };
 };
 
+/**
+ * Ejecuta una prueba de red usando protocolo UDP
+ * 
+ * Funcionamiento:
+ * 1. Crea un socket UDP y espera respuestas
+ * 2. Envía paquetes con headers JSON al agente remoto
+ * 3. El agente hace echo de los paquetes
+ * 4. Calcula RTT al recibir cada respuesta
+ * 5. Marca paquetes como perdidos si timeout
+ * 
+ * @param config - Configuración de la prueba
+ * @param testId - ID de la prueba
+ * @param pending - Mapa de paquetes pendientes
+ * @param timeoutPerPacket - Timeout en ms para considerar paquete perdido
+ * @param completePacket - Callback para marcar paquete como completo
+ * @param sendLoop - Función de loop de envío
+ * @param callbacks - Callbacks de progreso
+ */
 const runUdpTest = async (
   config: CreateTestRequest,
   testId: string,
@@ -155,7 +282,12 @@ const runUdpTest = async (
   callbacks: TestRunCallbacks
 ) => {
   const udpSocket = dgram.createSocket('udp4');
-  // Incoming UDP packets from the remote agent land here (filter in Wireshark with udp.port == 40000 by default).
+  
+  /**
+   * Manejador de mensajes UDP recibidos
+   * Decodifica el header, valida el testId y calcula RTT
+   * Filtro Wireshark: udp.port == 40000
+   */
   udpSocket.on('message', (msg) => {
     const header = decodeHeader(msg);
     if (!header || header.testId !== testId) {
@@ -174,12 +306,17 @@ const runUdpTest = async (
   udpSocket.bind();
   await once(udpSocket, 'listening');
 
+  /**
+   * Función para enviar un paquete UDP individual
+   */
   const sendPacket = async (seq: number) => {
     const sentAt = Date.now();
     const payloadBuffer = createPacketBuffer({ seq, testId, sentAt: new Date(sentAt).toISOString() }, config.packetSize);
     const timeout = setTimeout(() => completePacket(seq, 'lost'), timeoutPerPacket);
     pending.set(seq, { sentAt, timeout });
-    // Probe packets are sent over UDP so they are easy to sniff (udp.port == 40000).
+    
+    // Enviar paquete UDP al agente remoto
+    // Los paquetes son fáciles de capturar en Wireshark (udp.port == 40000)
     await new Promise<void>((resolve, reject) => {
       udpSocket.send(payloadBuffer, config.targetPort || UDP_PROBE_PORT, config.targetHost, (error) => {
         if (error) {
@@ -207,6 +344,28 @@ const runUdpTest = async (
   }
 };
 
+/**
+ * Ejecuta una prueba de red usando protocolo TCP
+ * 
+ * Funcionamiento:
+ * 1. Establece una conexión TCP con el agente remoto
+ * 2. Envía paquetes con headers JSON sobre la conexión
+ * 3. El agente hace echo de los paquetes
+ * 4. Calcula RTT al recibir cada respuesta
+ * 5. Marca paquetes como perdidos si timeout
+ * 
+ * Ventajas sobre UDP:
+ * - Conexión confiable
+ * - Orden garantizado de paquetes
+ * 
+ * @param config - Configuración de la prueba
+ * @param testId - ID de la prueba
+ * @param pending - Mapa de paquetes pendientes
+ * @param timeoutPerPacket - Timeout en ms para considerar paquete perdido
+ * @param completePacket - Callback para marcar paquete como completo
+ * @param sendLoop - Función de loop de envío
+ * @param callbacks - Callbacks de progreso
+ */
 const runTcpTest = async (
   config: CreateTestRequest,
   testId: string,
@@ -218,7 +377,12 @@ const runTcpTest = async (
 ) => {
   const client = new net.Socket();
   client.setNoDelay(true);
-  // Incoming TCP echoes are handled here (filter with tcp.port == 5050 in Wireshark).
+  
+  /**
+   * Manejador de datos TCP recibidos
+   * Decodifica el header, valida el testId y calcula RTT
+   * Filtro Wireshark: tcp.port == 5050
+   */
   client.on('data', (data) => {
     const header = decodeHeader(data);
     if (!header || header.testId !== testId) {
@@ -236,12 +400,17 @@ const runTcpTest = async (
     client.once('error', reject);
   });
 
+  /**
+   * Función para enviar un paquete TCP individual
+   */
   const sendPacket = async (seq: number) => {
     const sentAt = Date.now();
     const buffer = createPacketBuffer({ seq, testId, sentAt: new Date(sentAt).toISOString() }, config.packetSize);
     const timeout = setTimeout(() => completePacket(seq, 'lost'), timeoutPerPacket);
     pending.set(seq, { sentAt, timeout });
-    // TCP probes travel over the dedicated test port for deterministic captures.
+    
+    // Enviar paquete TCP al agente remoto
+    // Los paquetes viajan sobre el puerto de prueba dedicado para capturas determinísticas
     await new Promise<void>((resolve, reject) => {
       client.write(buffer, (error) => {
         if (error) {

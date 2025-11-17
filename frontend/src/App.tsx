@@ -1,4 +1,18 @@
-﻿import { Routes, Route } from 'react-router-dom';
+﻿/**
+ * App Principal
+ * 
+ * Este es el componente raíz que define todas las rutas de la aplicación.
+ * Básicamente es el "mapa" que dice qué página mostrar según la URL.
+ * 
+ * Rutas disponibles:
+ * - / : La página principal (Dashboard) con las estadísticas
+ * - /new-test : Formulario para crear y correr una nueva prueba
+ * - /history : Ver el historial de todas las pruebas que hiciste
+ * - /settings : Configurar URLs del servidor y cosas así
+ * - /help : Documentación y ayuda
+ */
+
+import { Routes, Route } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import DashboardPage from './pages/DashboardPage';
 import NewTestPage from './pages/NewTestPage';
